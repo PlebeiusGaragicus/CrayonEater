@@ -1,0 +1,7 @@
+python-dotenv
+pyaudio
+pygame
+pydub
+SpeechRecognition
+assemblyai
+openai
