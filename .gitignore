@@ -4,3 +4,6 @@ __pycache__/
 .env
 
 runlog/*
+
+# tts_*
+# user_*

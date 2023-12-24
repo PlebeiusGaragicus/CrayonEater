@@ -1,47 +1,87 @@
 import os
+import threading
+import json
 import pyaudio
 from pydub import AudioSegment
 
-from helpers import *
+import logging
+logger = logging.getLogger()
+
+from fren import helpers
+from fren.workflow import run_flow, transcribe_audio, speak
 
 # Audio Recording Class
 class AudioRecorder:
     def __init__(self, format=pyaudio.paInt16, channels=1, rate=44100, chunk=1024):
+        self._is_recording = False
+        self._lock = threading.Lock()
+
         self.format = format
         self.channels = channels
         self.rate = rate
         self.chunk = chunk
         self.frames = []
-        self.is_recording = False
         self.audio = pyaudio.PyAudio()
         self.stream = None
+
+    @property
+    def is_recording(self):
+        with self._lock:
+            return self._is_recording
+    
+    @is_recording.setter
+    def is_recording(self, value):
+        with self._lock:
+            self._is_recording = value
+
 
     def start_recording(self):
         self.is_recording = True
         self.frames = []
         self.stream = self.audio.open(format=self.format, channels=self.channels, 
                                       rate=self.rate, input=True, frames_per_buffer=self.chunk)
+
+        # while self.is_recording:
+        #     data = self.stream.read(self.chunk)
+        #     self.frames.append(data)
+
         while self.is_recording:
             data = self.stream.read(self.chunk)
+            if not self.is_recording:
+                break
             self.frames.append(data)
-        
+
         self.stream.stop_stream()
         self.stream.close()
         # self.audio.terminate()
 
-        sound = AudioSegment(data=b''.join(self.frames), sample_width=self.audio.get_sample_size(self.format),
-                             frame_rate=self.rate, channels=self.channels)
-        sound.export("user_recording.mp3", format="mp3")
+        runlog_dir = helpers.get_path("runlog", helpers.get_timestamp())
+        #make directory
+        os.makedirs(runlog_dir, exist_ok=True)
 
-        transcription = transcribe_audio()
+        user_recording_filename = helpers.get_path(runlog_dir, f"user_recording.mp3")
+        sound = AudioSegment(data=b''.join(self.frames), sample_width=self.audio.get_sample_size(self.format), frame_rate=self.rate, channels=self.channels)
+        sound.export(user_recording_filename, format="mp3")
 
-        # input_dict = {"input": transcription, "user_name": "Micah"}
+
+        transcription = transcribe_audio(user_recording_filename)
+        logger.info(transcription)
+        with open(runlog_dir + "/user_transcription.txt", "w") as f:
+            # json.dump(transcription, f, indent=4)
+            f.write(transcription)
+
         input_dict = {"input": transcription}
-        result = run_flow(input_dict, flow_id=os.getenv("FLOW_ID"), tweaks=TWEAKS)
+        # result = run_flow(input_dict, flow_id=os.getenv("FLOW_DEMO"), tweaks=TWEAKS)
+        result = run_flow(input_dict, flow_id=os.getenv("FLOW_DEMO"))
 
         logger.info(result)
+        # save to file
+        with open(runlog_dir + "/result.json", "w") as f:
+            json.dump(result, f, indent=4)
+            # f.write(result)
+
 
         try:
-            speak(result['result']['output'])
+            speak(result['result']['output'], runlog_dir)
         except KeyError:
-            speak(f"Something is wrong with my code... {result['detail']}", voice=OpenAIVoices[3])
+            speak(f"Something is wrong with my code... {result['detail']}", voice=helpers.OpenAIVoices[3])

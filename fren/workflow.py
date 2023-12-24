@@ -1,22 +1,28 @@
+import os
+import datetime
 from typing import Optional
 import requests
 import pygame
 import assemblyai as aai
 
-from helpers import *
+from fren import helpers
+
+import logging
+logger = logging.getLogger()
 
 
 
 
-
-def transcribe_audio():
+def transcribe_audio(filename):
     logger.info("Transcribing audio...")
     aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
     transcriber = aai.Transcriber()
 
     config = aai.TranscriptionConfig(speaker_labels=False)
-    transcript = transcriber.transcribe("./user_recording.mp3", config)
+    # transcript = transcriber.transcribe(helpers.HERE / "runlog" / "user_recording.mp3", config) #TODO
+    # transcript = transcriber.transcribe("./user_recording.mp3", config)
+    transcript = transcriber.transcribe(filename, config)
 
     logger.debug(transcript.text)
 
@@ -24,14 +30,24 @@ def transcribe_audio():
 
 
 
-def speak(input: str, voice = OpenAIVoices[4]):
-    response = OpenAIClient.audio.speech.create(
+def speak(input: str, runlog_dir, voice = helpers.OpenAIVoices[4]):
+    # global OpenAIClient
+
+    response = helpers.OpenAIClient.audio.speech.create(
         model="tts-1",
         voice=voice,
         input=f"{input}"
     )
 
-    speech_file_path = HERE / "tts.mp3"
+    # set timezone to Los Angeles
+    # os.environ['TZ'] = 'America/Los_Angeles'
+
+    # get date/time in format of 2023-01-01T00:00:00 without milliseconds
+    # date_time = datetime.datetime.now().replace(microsecond=0).isoformat()
+    # print("date_time:", date_time)
+
+    speech_file_path = helpers.get_path(runlog_dir, f"tts.mp3")
+    # speech_file_path = helpers.HERE / f"tts-{helpers.get_timestamp()}.mp3"
     response.stream_to_file(speech_file_path)
 
     # play the file with pygame
