@@ -39,15 +39,7 @@ def speak(input: str, runlog_dir, voice = helpers.OpenAIVoices[4]):
         input=f"{input}"
     )
 
-    # set timezone to Los Angeles
-    # os.environ['TZ'] = 'America/Los_Angeles'
-
-    # get date/time in format of 2023-01-01T00:00:00 without milliseconds
-    # date_time = datetime.datetime.now().replace(microsecond=0).isoformat()
-    # print("date_time:", date_time)
-
     speech_file_path = helpers.get_path(runlog_dir, f"tts.mp3")
-    # speech_file_path = helpers.HERE / f"tts-{helpers.get_timestamp()}.mp3"
     response.stream_to_file(speech_file_path)
 
     # play the file with pygame

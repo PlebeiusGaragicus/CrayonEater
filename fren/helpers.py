@@ -35,3 +35,6 @@ def get_path(dir, filename) -> str:
 def get_timestamp():
     # return datetime.datetime.now().replace(microsecond=0).isoformat()
     return datetime.datetime.now().replace(microsecond=0).isoformat().replace(":", "-")
+
+# set timezone to Los Angeles
+# os.environ['TZ'] = 'America/Los_Angeles'
