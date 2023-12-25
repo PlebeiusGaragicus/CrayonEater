@@ -14,6 +14,8 @@ from fren.model.audiorecorder import AudioRecorder
 from fren.model.singleton import Singleton
 from fren.audio import audio
 
+from fren.console import AbstractConsole
+
 
 
 class App(Singleton):
@@ -47,7 +49,6 @@ class App(Singleton):
         app.clock = pygame.time.Clock()
 
 
-
         _info = pygame.display.Info()
         app.width, app.height = _info.current_w, _info.current_h
 
@@ -65,6 +66,7 @@ class App(Singleton):
         
         pygame.display.set_allow_screensaver(False)
 
+        app.console = AbstractConsole(app.screen)
 
 
         return cls._instance
@@ -108,33 +110,40 @@ class App(Singleton):
             ### END EVENT LOOP ###
 
             # Fill the screen with a color
-            self.screen.fill((25, 55, 35))
-
+            # self.screen.fill((25, 55, 35))
+            self.screen.fill((0, 0, 0))
+            # self.console.add_text("Go...\n")
 
             # if not recorder.queue.empty():
             while not recorder.queue.empty():
                 Ai_state = recorder.queue.get()
 
                 if Ai_state == 'recording':
-                    text = font.render("Recording...", True, (200, 200, 100))
+                    # text = font.render("Recording...", True, (200, 200, 100))
+                    self.console.add_line("Recording...\n")
                 elif Ai_state == 'transcribing':
-                    text = font.render("Transcribing", True, (200, 200, 100))
+                    # text = font.render("Transcribing", True, (200, 200, 100))
+                    self.console.add_line("Transcribing...\n")
                 elif Ai_state == 'thinking':
                     # lemmethink.play()
                     audio().lemmethink()
-                    text = font.render("...thinking", True, (200, 200, 100))
+                    self.console.add_line("Thinking...\n")
+                    # text = font.render("...thinking", True, (200, 200, 100))
                 elif Ai_state == 'speaking':
-                    text = font.render("speaking...", True, (200, 200, 100))
+                    self.console.add_line("Speaking...\n")
+                    # text = font.render("speaking...", True, (200, 200, 100))
                 elif Ai_state == 'ready':
-                    text = font.render("Hold [SHIFT] to record your question!", True, (200, 200, 100))
+                    self.console.add_line("Ready - hold [SHIFT] to record...\n")
+                    # text = font.render("Hold [SHIFT] to record your question!", True, (200, 200, 100))
 
                 # elif Ai_state == 'ready':
                 # text = font.render("Error", True, (200, 200, 100))
 
-            text_rect = text.get_rect(center=(300, 300))
-            self.screen.blit(text, text_rect)
+            # text_rect = text.get_rect(center=(300, 300))
+            # self.screen.blit(text, text_rect)
 
             # Update the display
+            self.console.draw()
             pygame.display.flip()
 
         # record_thread.join(0.01)
