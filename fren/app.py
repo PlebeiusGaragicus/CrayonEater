@@ -116,27 +116,31 @@ class App(Singleton):
 
             # if not recorder.queue.empty():
             while not recorder.queue.empty():
-                Ai_state = recorder.queue.get()
+                recorder_thread_msg = recorder.queue.get()
 
-                if Ai_state == 'recording':
-                    # text = font.render("Recording...", True, (200, 200, 100))
-                    self.console.add_line("Recording...\n")
-                elif Ai_state == 'transcribing':
-                    # text = font.render("Transcribing", True, (200, 200, 100))
-                    self.console.add_line("Transcribing...\n")
-                elif Ai_state == 'thinking':
-                    # lemmethink.play()
-                    audio().lemmethink()
-                    self.console.add_line("Thinking...\n")
-                    # text = font.render("...thinking", True, (200, 200, 100))
-                elif Ai_state == 'speaking':
-                    self.console.add_line("Speaking...\n")
-                    # text = font.render("speaking...", True, (200, 200, 100))
-                elif Ai_state == 'ready':
-                    self.console.add_line("Ready - hold [SHIFT] to record...\n")
-                    # text = font.render("Hold [SHIFT] to record your question!", True, (200, 200, 100))
+                if type(recorder_thread_msg) is str:
+                    if recorder_thread_msg == 'recording':
+                        # text = font.render("Recording...", True, (200, 200, 100))
+                        self.console.add_line("Recording...")
+                    elif recorder_thread_msg == 'transcribing':
+                        # text = font.render("Transcribing", True, (200, 200, 100))
+                        self.console.add_line("Transcribing...")
+                    elif recorder_thread_msg == 'thinking':
+                        # lemmethink.play()
+                        audio().lemmethink()
+                        self.console.add_line("Thinking...")
+                        # text = font.render("...thinking", True, (200, 200, 100))
+                    elif recorder_thread_msg == 'speaking':
+                        self.console.add_line("Speaking...")
+                        # text = font.render("speaking...", True, (200, 200, 100))
+                    elif recorder_thread_msg == 'ready':
+                        self.console.add_line("Ready - hold [SHIFT] to record...")
+                        # text = font.render("Hold [SHIFT] to record your question!", True, (200, 200, 100))
+                elif type(recorder_thread_msg) is dict:
+                    # self.console.add_text(recorder_thread_msg['text'])
+                    self.console.add_line(recorder_thread_msg['text'])
 
-                # elif Ai_state == 'ready':
+                # elif recorder_thread_msg == 'ready':
                 # text = font.render("Error", True, (200, 200, 100))
 
             # text_rect = text.get_rect(center=(300, 300))

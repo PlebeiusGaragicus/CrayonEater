@@ -15,6 +15,7 @@ class AbstractConsole:
         self.current_line = ""
 
     def add_line(self, text):
+        self._flush_current_line()
         wrapped_text = textwrap.wrap(text, width=self.console_width // self.font.size(' ')[0])
         for line in wrapped_text:
             self.buffer.append(line)  # Add new line at the end of the buffer
