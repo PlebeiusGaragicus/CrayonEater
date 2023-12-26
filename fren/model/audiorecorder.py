@@ -1,33 +1,27 @@
 import os
 import threading
 import queue
+import json
 import time
 import websockets
+
 import asyncio
 import base64
-
-import json
 import pyaudio
 from pydub import AudioSegment
+
+import whisper
+from torch import float32
 
 
 import logging
 logger = logging.getLogger()
 
 from fren import helpers
-from fren.workflow import run_flow, transcribe_audio, speak
+from fren.workflow import run_flow, transcribe_audio, speak, speak_locally
 from fren.audio import audio
 
 
-
-
-
-import asyncio
-import websockets
-import pyaudio
-import base64
-import json
-import os
 
 class TranscriptionService:
     def __init__(self, ar):
@@ -158,7 +152,7 @@ class AudioRecorder:
 
 
     ########################################
-    def record_transcribe(self, runlog_dir):
+    def record_while_holding(self, runlog_dir):
         self.frames = []
         self.stream = self.audio.open(format=self.format, channels=self.channels, 
                                       rate=self.rate, input=True, frames_per_buffer=self.chunk)
@@ -181,7 +175,9 @@ class AudioRecorder:
         sound.export(user_recording_filename, format="mp3")
 
 
-        transcription = transcribe_audio(user_recording_filename)
+    ############################################
+    def transcribe_assemblyai(self, runlog_dir):
+        transcription = transcribe_audio(helpers.get_path(runlog_dir, f"user_recording.mp3"))
         logger.info(transcription)
         self.queue.put({"text": transcription})
 
@@ -291,11 +287,13 @@ class AudioRecorder:
         #make directory
         os.makedirs(runlog_dir, exist_ok=True)
 
-        # transcription = self.record_transcribe(runlog_dir)
+        self.record_while_holding(runlog_dir)
+        # transcription = self.transcribe_assemblyai(runlog_dir)
         # transcription = self.realtime_transcription()
 
-        transcription_service = TranscriptionService(self)
-        transcription = transcription_service.realtime_transcription()
+        # transcription_service = TranscriptionService(self)
+        # transcription = transcription_service.realtime_transcription()
+        transcription = WhisperTranscriber().transcribe(runlog_dir + "/user_recording.mp3")
 
         logger.info(transcription)
         with open(runlog_dir + "/user_transcription.txt", "w") as f:
@@ -322,9 +320,40 @@ class AudioRecorder:
         ##########################
         self.queue.put('speaking')
         try:
-            speak(result['result']['output'], runlog_dir)
+            # speak(result['result']['output'], runlog_dir)
+            speak_locally(result['result']['output'], runlog_dir)
         except KeyError:
-            speak(f"Something is wrong with my code... {result['detail']}", voice=helpers.OpenAIVoices[3])
+            # speak(f"Something is wrong with my code... {result['detail']}", voice=helpers.OpenAIVoices[3])
+            speak_locally(f"Something is wrong with my code... {result['detail']}", runlog_dir)
 
         #######################
         self.queue.put('ready')
+
+
+
+
+class WhisperTranscriber:
+    def __init__(self):
+        self.model = whisper.load_model("base")
+
+    def transcribe(self, filepath):
+        # decode_options = {
+        #     'fp16': False
+        # }
+        # result = self.model.transcribe(filepath, decode_options=decode_options)
+        result = self.model.transcribe(filepath)
+        return result['text']
+
+
+# "tiny.en"
+# "tiny"
+# "base.en"
+# "base"
+# "small.en"
+# "small"
+# "medium.en"
+# "medium"
+# "large-v2"
+# "large-v1"
+# "large-v3"
+# "large"

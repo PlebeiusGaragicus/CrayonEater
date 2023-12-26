@@ -4,6 +4,8 @@ from typing import Optional
 import requests
 import pygame
 import assemblyai as aai
+import pyttsx3
+
 
 from fren import helpers
 
@@ -47,6 +49,35 @@ def speak(input: str, runlog_dir, voice = helpers.OpenAIVoices[4]):
     tts.play()
 
 
+def speak_locally(input: str, runlog_dir):
+    # engine = pyttsx3.init()
+    # engine.say(input)
+    # engine.runAndWait()
+
+    speech_file_path = helpers.get_path(runlog_dir, f"tts.mp3")
+
+    from gtts import gTTS
+    tts = gTTS(input, lang='en')
+    tts.save(speech_file_path)
+
+    from pydub.playback import play
+    from pydub import AudioSegment
+
+    # Load the audio file
+    sound = AudioSegment.from_mp3(speech_file_path)
+
+    # Speed up the sound
+    speed_up = sound.speedup(playback_speed=1.4)
+
+    # Save the modified file
+    speed_up.export(speech_file_path, format='mp3')
+
+    # Play the modified file
+    # play(speed_up)
+
+    # play the file with pygame
+    tts = pygame.mixer.Sound(speech_file_path)
+    tts.play()
 
 
 
