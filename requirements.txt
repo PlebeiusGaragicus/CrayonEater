@@ -3,5 +3,15 @@ pyaudio
 pygame
 pydub
 SpeechRecognition
+vllm
+langchain
 assemblyai
 openai
+openai-whisper
+
+# https://huggingface.co/docs/transformers/tasks/text-to-speech
+git+https://github.com/huggingface/transformers.git
+datasets
+soundfile
+speechbrain
+accelerate

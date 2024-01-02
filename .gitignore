@@ -7,6 +7,7 @@ __pycache__/
 
 
 runlog/*
+DATABASE/*
 
 # tts_*
 # user_*
